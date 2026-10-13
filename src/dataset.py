@@ -51,10 +51,10 @@ def stratified_split(paths, races, val_size=0.15, test_size=0.15, seed=SEED):
     return (p_train, y_train), (p_val, y_val), (p_test, y_test)
 
 
-def _decode(path, label):
+def _decode(path, label, img_size=IMG_SIZE):
     img = tf.io.read_file(path)
     img = tf.image.decode_jpeg(img, channels=3, try_recover_truncated=True)
-    img = tf.image.resize(img, [IMG_SIZE, IMG_SIZE])
+    img = tf.image.resize(img, [img_size, img_size])
     return img, label
 
 
@@ -72,9 +72,10 @@ def get_augmentation_layer():
     )
 
 
-def make_tf_dataset(paths, labels, training: bool, batch_size=BATCH_SIZE, augment: bool = False):
+def make_tf_dataset(paths, labels, training: bool, batch_size=BATCH_SIZE, augment: bool = False,
+                    img_size=IMG_SIZE):
     ds = tf.data.Dataset.from_tensor_slices((list(paths), list(labels)))
-    ds = ds.map(_decode, num_parallel_calls=tf.data.AUTOTUNE)
+    ds = ds.map(lambda p, l: _decode(p, l, img_size), num_parallel_calls=tf.data.AUTOTUNE)
     if training:
         ds = ds.shuffle(min(len(paths), 4096), seed=SEED)
     if augment and training:
@@ -86,14 +87,16 @@ def make_tf_dataset(paths, labels, training: bool, batch_size=BATCH_SIZE, augmen
     return ds
 
 
-def build_datasets_from_folder(data_dir, batch_size=BATCH_SIZE, val_size=0.15, test_size=0.15, augment=True):
+def build_datasets_from_folder(data_dir, batch_size=BATCH_SIZE, val_size=0.15, test_size=0.15,
+                               augment=True, img_size=IMG_SIZE):
     paths, races, _, _ = scan_dataset(data_dir)
     if len(paths) == 0:
         raise FileNotFoundError(f"No se encontraron imagenes UTKFace en {data_dir}")
     (p_tr, y_tr), (p_va, y_va), (p_te, y_te) = stratified_split(paths, races, val_size, test_size)
-    train_ds = make_tf_dataset(p_tr, y_tr, training=True, batch_size=batch_size, augment=augment)
-    val_ds = make_tf_dataset(p_va, y_va, training=False, batch_size=batch_size)
-    test_ds = make_tf_dataset(p_te, y_te, training=False, batch_size=batch_size)
+    train_ds = make_tf_dataset(p_tr, y_tr, training=True, batch_size=batch_size, augment=augment,
+                               img_size=img_size)
+    val_ds = make_tf_dataset(p_va, y_va, training=False, batch_size=batch_size, img_size=img_size)
+    test_ds = make_tf_dataset(p_te, y_te, training=False, batch_size=batch_size, img_size=img_size)
     meta = {"train_n": len(p_tr), "val_n": len(p_va), "test_n": len(p_te),
             "train_paths": p_tr, "val_paths": p_va, "test_paths": p_te,
             "y_train": y_tr, "y_val": y_va, "y_test": y_te}

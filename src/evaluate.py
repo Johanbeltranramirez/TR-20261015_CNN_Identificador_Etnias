@@ -21,8 +21,13 @@ def main():
     args = ap.parse_args()
 
     class_names = load_class_names(args.class_names) if Path(args.class_names).exists() else CLASS_NAMES
-    _, _, test_ds, meta = build_datasets_from_folder(args.data_dir, batch_size=args.batch_size, augment=False)
     model = tf.keras.models.load_model(args.model)
+    try:
+        img_size = int(model.input_shape[1]) or 128
+    except (TypeError, IndexError):
+        img_size = 128
+    _, _, test_ds, meta = build_datasets_from_folder(
+        args.data_dir, batch_size=args.batch_size, augment=False, img_size=img_size)
     loss, acc = model.evaluate(test_ds, verbose=1)
     print(f"Prueba: pérdida={loss:.4f} exactitud={acc:.4f}")
 

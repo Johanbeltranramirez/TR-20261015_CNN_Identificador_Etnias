@@ -14,7 +14,7 @@ Cada imagen sigue el formato original UTKFace:
 
 ```
 data/
-├── raw/UTKFace/*.jpg            # conjunto de trabajo (700 imágenes, 140 por etnia)
+├── raw/UTKFace/*.jpg            # conjunto de trabajo (4000 imágenes, 800 por etnia)
 ├── raw/utkface-cropped.parquet  # espejo original descargado (23.704 filas, ~111 MB)
 ├── muestra/UTKFace/*.jpg        # muestra incluida en el repo (125 imágenes, 25 por etnia)
 └── README.md
@@ -39,8 +39,8 @@ India 3.975, Otras 1.692 (desbalance típico del dataset).
 
 ```bash
 pip install -r requirements.txt   # incluye pyarrow + pillow para la extracción
-python -m src.extraer_muestra --descargar
-# Opciones: --cuota-raw 140 --cuota-muestra 25
+python -m src.extraer_muestra --descargar --cuota-raw 800
+# Opciones: --cuota-raw 800 --cuota-muestra 25
 ```
 
 Esto descarga el parquet a `data/raw/` y extrae una muestra **balanceada y

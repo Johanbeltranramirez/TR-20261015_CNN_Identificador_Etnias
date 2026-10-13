@@ -100,9 +100,17 @@ if img_file is not None:
     idx = int(np.argmax(probs))
     label_en = class_names[idx]
     label_es = CLASS_NAMES_ES.get(label_en, label_en)
-    st.metric("Clase predicha", label_es, f"{probs[idx]*100:.2f} % de confianza")
+    confianza = float(probs[idx])
+    st.metric("Clase predicha", label_es, f"{confianza*100:.2f} % de confianza")
     st.caption(f"Etiqueta técnica original del conjunto de datos: {label_en}")
-    st.progress(float(probs[idx]), text="Nivel de confianza")
+    if confianza < 0.50:
+        st.error("Confianza muy baja (< 50 %): el resultado **no es fiable**. "
+                 "Sube una foto frontal, nítida, con buena luz y sin oclusiones (sin dedos, "
+                 "sin fotos de pantallas) y vuelve a intentarlo.")
+    elif confianza < 0.70:
+        st.warning("Confianza baja (< 70 %): toma el resultado **con cautela**. "
+                   "Una foto frontal con buena luz mejora mucho la predicción.")
+    st.progress(confianza, text="Nivel de confianza")
     st.subheader("Probabilidad por clase")
     import pandas as pd
     df = pd.DataFrame({
@@ -114,4 +122,6 @@ if img_file is not None:
     st.dataframe(df.style.format({"Probabilidad": "{:.4f}"}), use_container_width=True)
 else:
     st.info("Sube una imagen para obtener la predicción y la probabilidad por clase.")
-    st.caption("Consejo: usa fotos frontales, con buena luz y un solo rostro (como en UTKFace).")
+    st.caption("Consejo: usa fotos frontales, nítidas, con buena luz y un solo rostro "
+               "(como en UTKFace). Evita fotos de pantallas, dedos u objetos que tapen la cara: "
+               "esos casos bajan mucho la confianza y el resultado no es fiable.")

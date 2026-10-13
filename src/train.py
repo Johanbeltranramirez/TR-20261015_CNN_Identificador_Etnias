@@ -107,7 +107,8 @@ def main():
     else:
         print(f">> Cargando UTKFace desde {args.data_dir}")
         train_ds, val_ds, test_ds, meta = build_datasets_from_folder(
-            args.data_dir, batch_size=args.batch_size, augment=not args.no_augment)
+            args.data_dir, batch_size=args.batch_size, augment=not args.no_augment,
+            img_size=args.img_size)
         print(f"Conjuntos: entrenamiento={meta['train_n']} validación={meta['val_n']} prueba={meta['test_n']}")
         class_names = CLASS_NAMES
 
@@ -121,8 +122,10 @@ def main():
         class_weight = None
 
     weights = None if args.demo else "imagenet"
-    model = build_model(args.model, img_size=args.img_size, weights=weights) if args.model == "transfer" \
-        else build_model("simple", img_size=args.img_size)
+    if args.model == "transfer":
+        model = build_model(args.model, img_size=args.img_size, weights=weights)
+    else:
+        model = build_model("simple", img_size=args.img_size)
     # build_model con weights=None en demo evita descargar ImageNet si no hay internet
     model.summary(print_fn=print)
 

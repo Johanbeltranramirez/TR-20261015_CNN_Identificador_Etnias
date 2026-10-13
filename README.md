@@ -19,12 +19,12 @@ Clasificación de imágenes de rostros en **5 grupos étnicos del conjunto de da
 ├── notebooks/
 │   └── experimentacion.ipynb   # Notebook de experimentación (Google Colab)
 ├── model/
-│   ├── ethnicity_cnn.h5        # Modelo entrenado (CNN simple 128px con 700 imágenes reales;
+│   ├── ethnicity_cnn.h5        # Modelo entrenado (CNN simple 96px, 15 épocas, 4000 imágenes reales;
 │   │                           #  re-entrena en Colab con más datos + transfer para producción)
 │   └── class_names.json        # ["White","Black","Asian","Indian","Others"]
 ├── results/                    # training_history.png, confusion_matrix*.png, sample_predictions.png
 ├── data/
-│   ├── raw/UTKFace/*.jpg       # conjunto de trabajo real (700 imágenes, ignorado por git)
+│   ├── raw/UTKFace/*.jpg       # conjunto de trabajo real (4000 imágenes, 800 por etnia; ignorado por git)
 │   ├── muestra/UTKFace/*.jpg   # muestra real incluida en el repo (125 imágenes)
 │   └── README.md               # Fuentes y regeneración de datos
 ├── requirements.txt
@@ -49,8 +49,8 @@ Clasificación de imágenes de rostros en **5 grupos étnicos del conjunto de da
 
 ```bash
 pip install -r requirements.txt
-python -m src.extraer_muestra --descargar
-# Opciones: --cuota-raw 140 --cuota-muestra 25
+python -m src.extraer_muestra --descargar --cuota-raw 800
+# Opciones: --cuota-raw 800 --cuota-muestra 25
 ```
 
 Esto genera `data/raw/UTKFace/*.jpg` (trabajo) y `data/muestra/UTKFace/*.jpg`
@@ -116,11 +116,12 @@ Tras entrenar se generan en `results/`:
 - `training_log.csv`, `metrics.txt`
 
 > **Resultados incluidos en el repo:** corresponden al modelo actual (CNN simple
-> 128px, 5 épocas en CPU, 700 imágenes reales: entrenamiento=490,
-> validación=105, prueba=105). Exactitud en prueba ~0.21: esperable con tan
-> pocos datos y pocas épocas; sirven para verificar el flujo completo en
-> español. Para pesos de producción, re-entrena en Colab con 2000+ imágenes y
-> `--model transfer` (referencia esperada ~0.78–0.86).
+> 96px, 15 épocas en CPU, 4000 imágenes reales balanceadas: entrenamiento=2800,
+> validación=600, prueba=600). Exactitud en prueba **0.575** (por clase F1:
+> Negra 0.76, Asiática 0.69, Blanca 0.55, India 0.46, Otras 0.32). La app avisa
+> cuando la confianza es baja (< 70 %) o muy baja (< 50 %). Para pesos de
+> producción, re-entrena en Colab con 2000+ imágenes y `--model transfer`
+> (referencia esperada ~0.78–0.86).
 
 ## 7. Predicción por código
 
