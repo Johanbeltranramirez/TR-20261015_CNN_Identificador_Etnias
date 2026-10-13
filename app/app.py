@@ -18,6 +18,7 @@ sys.path.insert(0, str(ROOT))
 import streamlit as st
 
 from src.config import CLASS_NAMES_ES, IMG_SIZE
+from src.predict import recortar_rostro
 
 MODEL_CANDIDATES = [
     ROOT / "model" / "ethnicity_cnn.h5",
@@ -94,7 +95,14 @@ img_file = cam_img if cam_img is not None else uploaded
 if img_file is not None:
     img = Image.open(img_file)
     st.image(img, caption="Imagen ingresada", use_container_width=True)
-    x, preview = preprocess(img, model)
+    with st.spinner("Detectando el rostro…"):
+        cara, rostro_hallado = recortar_rostro(img)
+    if rostro_hallado:
+        st.image(cara, caption="Rostro recortado para el análisis", width=240)
+    else:
+        st.info("No se detectó un rostro claro: se analiza la imagen completa. "
+                "Un recorte ajustado a la cara mejora el resultado.")
+    x, preview = preprocess(cara, model)
     with st.spinner("Analizando la imagen…"):
         probs = model.predict(x, verbose=0)[0]
     idx = int(np.argmax(probs))

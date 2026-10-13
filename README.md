@@ -19,7 +19,7 @@ Clasificación de imágenes de rostros en **5 grupos étnicos del conjunto de da
 ├── notebooks/
 │   └── experimentacion.ipynb   # Notebook de experimentación (Google Colab)
 ├── model/
-│   ├── ethnicity_cnn.h5        # Modelo entrenado (CNN simple 96px, 15 épocas, 4000 imágenes reales;
+│   ├── ethnicity_cnn.h5        # Modelo entrenado (CNN simple 96px, 30 épocas, 4000 imágenes reales;
 │   │                           #  re-entrena en Colab con más datos + transfer para producción)
 │   └── class_names.json        # ["White","Black","Asian","Indian","Others"]
 ├── results/                    # training_history.png, confusion_matrix*.png, sample_predictions.png
@@ -89,6 +89,9 @@ python -m src.evaluate --data-dir data/raw/UTKFace --model model/ethnicity_cnn.h
 streamlit run app/app.py
 ```
 Sube un `jpg/png` → verás **clase predicha + % confianza + barras por clase**.
+La app **recorta el rostro automáticamente** (el modelo se entrenó con rostros
+ajustados; las fotos con hombros, ropa o fondo lo desorientan) y advierte si la
+confianza es baja (< 70 %) o muy baja (< 50 %).
 
 ## 4. Google Colab (notebook)
 
@@ -116,12 +119,12 @@ Tras entrenar se generan en `results/`:
 - `training_log.csv`, `metrics.txt`
 
 > **Resultados incluidos en el repo:** corresponden al modelo actual (CNN simple
-> 96px, 15 épocas en CPU, 4000 imágenes reales balanceadas: entrenamiento=2800,
-> validación=600, prueba=600). Exactitud en prueba **0.575** (por clase F1:
-> Negra 0.76, Asiática 0.69, Blanca 0.55, India 0.46, Otras 0.32). La app avisa
-> cuando la confianza es baja (< 70 %) o muy baja (< 50 %). Para pesos de
-> producción, re-entrena en Colab con 2000+ imágenes y `--model transfer`
-> (referencia esperada ~0.78–0.86).
+> 96px, 30 épocas en CPU, 4000 imágenes reales balanceadas: entrenamiento=2800,
+> validación=600, prueba=600). Exactitud en prueba **0.608** (por clase F1:
+> Negra 0.75, India 0.66, Blanca 0.61, Asiática 0.59, Otras 0.34). La app recorta
+> el rostro automáticamente y avisa cuando la confianza es baja (< 70 %) o muy
+> baja (< 50 %). Para pesos de producción, re-entrena en Colab con 2000+
+> imágenes y `--model transfer` (referencia esperada ~0.78–0.86).
 
 ## 7. Predicción por código
 

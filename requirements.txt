@@ -9,4 +9,5 @@ seaborn>=0.13
 streamlit>=1.32
 pandas>=2.0
 pyarrow>=10.0    # lectura del espejo UTKFace en parquet (src/extraer_muestra.py)
+opencv-python-headless==4.10.0.84  # recorte automático del rostro (v5 eliminó Haar)
 tqdm>=4.66
