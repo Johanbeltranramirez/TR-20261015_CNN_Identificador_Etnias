@@ -1,2 +1,2 @@
-perdida=1.6035
-exactitud=0.4000
+perdida=1.6449
+exactitud=0.2095

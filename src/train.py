@@ -143,7 +143,6 @@ def main():
     # Evaluación en el conjunto de prueba
     loss, acc = model.evaluate(test_ds, verbose=1)
     print(f"Prueba: pérdida={loss:.4f} exactitud={acc:.4f}")
-    import numpy as np
     y_true = np.concatenate([y.numpy() for _, y in test_ds])
     y_pred = np.argmax(model.predict(test_ds, verbose=1), axis=1)
     print_report(y_true, y_pred, class_names)
