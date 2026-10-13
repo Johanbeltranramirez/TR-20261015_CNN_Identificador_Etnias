@@ -2,7 +2,7 @@
 
 Uso tipico (Colab / local):
     python -m src.train --data-dir data/raw/UTKFace --epochs 25 --model transfer
-    python -m src.train --demo --epochs 5   # sin dataset: datos sinteticos para probar el pipeline
+    python -m src.train --demo --epochs 5   # sin imágenes: datos sintéticos para probar el flujo
 """
 from __future__ import annotations
 
@@ -17,7 +17,7 @@ import numpy as np
 import tensorflow as tf
 from tensorflow import keras
 
-from .config import (BATCH_SIZE, CLASS_NAMES, CLASS_NAMES_PATH, EPOCHS, IMG_SIZE,
+from .config import (BATCH_SIZE, CLASS_NAMES, CLASS_NAMES_ES, CLASS_NAMES_PATH, EPOCHS, IMG_SIZE,
                      MODEL_PATH, RESULTS_DIR)
 from .dataset import build_datasets_from_folder, make_tf_dataset
 from .model import build_model
@@ -25,7 +25,7 @@ from .utils import plot_confusion_matrix, plot_history, print_report, save_class
 
 
 def make_demo_datasets(num_per_class=60, img_size=64, batch_size=32):
-    """Dataset sintetico (ruido estructurado por clase) para validar el pipeline sin UTKFace."""
+    """Datos sintéticos (ruido estructurado por clase) para validar el flujo sin UTKFace."""
     rng = np.random.default_rng(42)
     n_classes = len(CLASS_NAMES)
     paths_train, paths_val, paths_test = [], [], []
@@ -59,6 +59,7 @@ def plot_sample_predictions(model, test_ds, class_names, out_path, n=12):
     images = np.stack(images)
     probs = model.predict(images, verbose=0)
     preds = np.argmax(probs, axis=1)
+    nombres_es = [CLASS_NAMES_ES.get(c, c) for c in class_names]
     cols = 4
     rows = int(np.ceil(n / cols))
     fig, axes = plt.subplots(rows, cols, figsize=(cols * 3, rows * 3.2))
@@ -69,28 +70,29 @@ def plot_sample_predictions(model, test_ds, class_names, out_path, n=12):
             continue
         ax.imshow(np.clip(images[i], 0, 1))
         ok = preds[i] == labels[i]
-        ax.set_title(f"Real: {class_names[labels[i]]}\nPred: {class_names[preds[i]]} ({probs[i][preds[i]]:.2f})",
+        ax.set_title(f"Real: {nombres_es[labels[i]]}\nPredicha: {nombres_es[preds[i]]} ({probs[i][preds[i]]:.2f})",
                      fontsize=8, color="green" if ok else "red")
         ax.axis("off")
-    fig.suptitle("Predicciones de ejemplo (test)", fontsize=12)
+    fig.suptitle("Predicciones de ejemplo (conjunto de prueba)", fontsize=12)
     fig.tight_layout()
     fig.savefig(out_path, dpi=150)
     plt.close(fig)
 
 
 def main():
-    ap = argparse.ArgumentParser()
-    ap.add_argument("--data-dir", default=None, help="Carpeta con *.jpg de UTKFace")
-    ap.add_argument("--demo", action="store_true", help="Usar datos sinteticos (sin dataset)")
-    ap.add_argument("--model", choices=["transfer", "simple"], default="transfer")
-    ap.add_argument("--epochs", type=int, default=EPOCHS)
-    ap.add_argument("--batch-size", type=int, default=BATCH_SIZE)
-    ap.add_argument("--img-size", type=int, default=IMG_SIZE)
-    ap.add_argument("--no-augment", action="store_true")
-    ap.add_argument("--model-out", default=str(MODEL_PATH))
-    ap.add_argument("--demo-n", type=int, default=60)
-    ap.add_argument("--class-names-out", default=str(CLASS_NAMES_PATH))
-    ap.add_argument("--results-dir", default=str(RESULTS_DIR))
+    ap = argparse.ArgumentParser(description="Entrenamiento de la CNN (UTKFace) — interfaz en español.")
+    ap.add_argument("--data-dir", default=None, help="Carpeta con imágenes *.jpg de UTKFace")
+    ap.add_argument("--demo", action="store_true", help="Usar datos sintéticos de prueba (sin imágenes)")
+    ap.add_argument("--model", choices=["transfer", "simple"], default="transfer",
+                    help="Arquitectura: transfer (MobileNetV2) o simple (desde cero)")
+    ap.add_argument("--epochs", type=int, default=EPOCHS, help="Número de épocas")
+    ap.add_argument("--batch-size", type=int, default=BATCH_SIZE, help="Tamaño de lote")
+    ap.add_argument("--img-size", type=int, default=IMG_SIZE, help="Tamaño de imagen (px)")
+    ap.add_argument("--no-augment", action="store_true", help="Desactivar el aumento de datos")
+    ap.add_argument("--model-out", default=str(MODEL_PATH), help="Ruta de salida del modelo")
+    ap.add_argument("--demo-n", type=int, default=60, help="Muestras por clase en modo demo")
+    ap.add_argument("--class-names-out", default=str(CLASS_NAMES_PATH), help="Ruta del JSON de clases")
+    ap.add_argument("--results-dir", default=str(RESULTS_DIR), help="Carpeta de resultados")
     args = ap.parse_args()
 
     results_dir = Path(args.results_dir)
@@ -98,7 +100,7 @@ def main():
     Path(args.model_out).parent.mkdir(parents=True, exist_ok=True)
 
     if args.demo or not args.data_dir:
-        print(">> Modo DEMO: datos sinteticos.")
+        print(">> Modo de demostración: datos sintéticos de prueba.")
         train_ds, val_ds, test_ds, meta = make_demo_datasets(
             num_per_class=args.demo_n, batch_size=args.batch_size, img_size=args.img_size)
         class_names = CLASS_NAMES
@@ -106,15 +108,15 @@ def main():
         print(f">> Cargando UTKFace desde {args.data_dir}")
         train_ds, val_ds, test_ds, meta = build_datasets_from_folder(
             args.data_dir, batch_size=args.batch_size, augment=not args.no_augment)
-        print(f"Train={meta['train_n']} Val={meta['val_n']} Test={meta['test_n']}")
+        print(f"Conjuntos: entrenamiento={meta['train_n']} validación={meta['val_n']} prueba={meta['test_n']}")
         class_names = CLASS_NAMES
 
-    # Class weights para desbalance (UTKFace esta desbalanceado hacia White)
+    # Pesos por clase ante el desbalance (UTKFace concentra la mayoría en White)
     if not meta.get("demo"):
         from sklearn.utils.class_weight import compute_class_weight
         cw = compute_class_weight("balanced", classes=np.arange(len(class_names)), y=meta["y_train"])
         class_weight = {i: float(w) for i, w in enumerate(cw)}
-        print("Class weights:", class_weight)
+        print("Pesos por clase:", class_weight)
     else:
         class_weight = None
 
@@ -138,9 +140,9 @@ def main():
 
     plot_history(history, results_dir / "training_history.png")
 
-    # Evaluacion
+    # Evaluación en el conjunto de prueba
     loss, acc = model.evaluate(test_ds, verbose=1)
-    print(f"TEST loss={loss:.4f} accuracy={acc:.4f}")
+    print(f"Prueba: pérdida={loss:.4f} exactitud={acc:.4f}")
     import numpy as np
     y_true = np.concatenate([y.numpy() for _, y in test_ds])
     y_pred = np.argmax(model.predict(test_ds, verbose=1), axis=1)
@@ -148,7 +150,7 @@ def main():
     plot_confusion_matrix(y_true, y_pred, class_names, results_dir / "confusion_matrix.png")
     plot_confusion_matrix(y_true, y_pred, class_names, results_dir / "confusion_matrix_norm.png", normalize=True)
     plot_sample_predictions(model, test_ds, class_names, results_dir / "sample_predictions.png", n=12)
-    (results_dir / "metrics.txt").write_text(f"loss={loss:.4f}\naccuracy={acc:.4f}\n", encoding="utf-8")
+    (results_dir / "metrics.txt").write_text(f"perdida={loss:.4f}\nexactitud={acc:.4f}\n", encoding="utf-8")
 
 
 if __name__ == "__main__":

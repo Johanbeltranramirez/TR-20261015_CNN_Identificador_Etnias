@@ -3,16 +3,18 @@ from pathlib import Path
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 
-# Clases UTKFace (race 0-4). Se mantienen los nombres originales en ingles
-# para compatibilidad con el dataset + etiqueta en espanol para la UI.
+# Clases UTKFace (race 0-4). Los nombres originales en ingles se conservan
+# solo como clave tecnica (compatibilidad con el dataset); toda la
+# interfaz de usuario muestra las etiquetas en espanol.
 CLASS_NAMES = ["White", "Black", "Asian", "Indian", "Others"]
 CLASS_NAMES_ES = {
-    "White": "Blanca / Caucasica",
+    "White": "Blanca / Caucásica",
     "Black": "Negra / Afrodescendiente",
-    "Asian": "Asiatica",
-    "Indian": "India / Sudasiatica",
-    "Others": "Otras (Latina, Oriente Medio, mixta...)",
+    "Asian": "Asiática",
+    "Indian": "India / Sudasiática",
+    "Others": "Otras (latina, Oriente Medio, mixta…)",
 }
+CLASES_ES = [CLASS_NAMES_ES[c] for c in CLASS_NAMES]
 RACE_TO_LABEL = {i: name for i, name in enumerate(CLASS_NAMES)}
 
 IMG_SIZE = 128          # (IMG_SIZE, IMG_SIZE, 3). MobileNetV2 acepta >= 32.

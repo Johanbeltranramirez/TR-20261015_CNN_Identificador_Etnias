@@ -24,7 +24,7 @@ def main():
     _, _, test_ds, meta = build_datasets_from_folder(args.data_dir, batch_size=args.batch_size, augment=False)
     model = tf.keras.models.load_model(args.model)
     loss, acc = model.evaluate(test_ds, verbose=1)
-    print(f"Test loss={loss:.4f} acc={acc:.4f}")
+    print(f"Prueba: pérdida={loss:.4f} exactitud={acc:.4f}")
 
     y_true = np.concatenate([y.numpy() for _, y in test_ds])
     y_pred = np.argmax(model.predict(test_ds, verbose=1), axis=1)

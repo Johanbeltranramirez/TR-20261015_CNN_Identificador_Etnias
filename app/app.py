@@ -1,6 +1,6 @@
-"""App Streamlit: clasificador de etnias (CNN UTKFace).
+"""Aplicación Streamlit en español: clasificador de etnias (CNN UTKFace).
 
-Ejecucion:
+Ejecución:
     streamlit run app/app.py
 """
 from __future__ import annotations
@@ -65,14 +65,16 @@ def preprocess(img: Image.Image, model=None):
 
 st.set_page_config(page_title="CNN Identificador de Etnias", page_icon="🧬", layout="centered")
 st.title("🧬 CNN — Identificador de Etnias Culturales")
-st.caption("Clasificacion de rasgos faciales en 5 grupos del dataset UTKFace (White, Black, Asian, Indian, Others). Uso educativo.")
+st.caption("Clasificación de rasgos faciales en 5 grupos del conjunto de datos UTKFace. Uso educativo.")
 
 with st.expander("ℹ️ Sobre el modelo y uso responsable", expanded=False):
     st.markdown(
-        "- **Dataset:** UTKFace (Aligned & Cropped, ~20k rostros, solo investigacion no comercial).\n"
-        "- **Modelo:** MobileNetV2 (transfer learning) + cabeza densa, entrada 128×128, Data Augmentation.\n"
-        "- **Advertencia:** la etnia no se reduce a rasgos fisicos; el modelo refleja sesgos del dataset "
-        "(mayoria White) y **no debe usarse** para discriminar, vigilar o tomar decisiones sobre personas."
+        "- **Conjunto de datos:** UTKFace (rostros alineados y recortados, ~20 mil rostros, solo investigación no comercial).\n"
+        "- **Modelo:** MobileNetV2 (aprendizaje por transferencia) + capa densa, entrada de 128×128, aumento de datos.\n"
+        "- **Clases:** las etiquetas técnicas originales (White, Black, Asian, Indian, Others) se muestran siempre "
+        "traducidas al español en esta aplicación.\n"
+        "- **Advertencia:** la etnia no se reduce a rasgos físicos; el modelo refleja los sesgos del conjunto de datos "
+        "(mayoría de clase Blanca) y **no debe usarse** para discriminar, vigilar ni tomar decisiones sobre personas."
     )
 
 try:
@@ -80,11 +82,11 @@ try:
     st.success(f"Modelo cargado: `{model_path.name}` ({len(class_names)} clases)")
 except Exception as e:  # noqa: BLE001
     st.error(f"No se pudo cargar el modelo: {e}")
-    st.info("Entrena con `python -m src.train --data-dir data/raw/UTKFace` o `python -m src.train --demo` y reintenta.")
+    st.info("Entrena con `python -m src.train --data-dir data/raw/UTKFace` o `python -m src.train --demo` y vuelve a intentarlo.")
     st.stop()
 
-uploaded = st.file_uploader("Sube una foto de rostro (jpg/png)", type=["jpg", "jpeg", "png"])
-use_camera = st.checkbox("O usa la camara", value=False)
+uploaded = st.file_uploader("Sube una foto de un rostro (jpg/png)", type=["jpg", "jpeg", "png"])
+use_camera = st.checkbox("O usa la cámara", value=False)
 cam_img = st.camera_input("Toma una foto") if use_camera else None
 
 img_file = cam_img if cam_img is not None else uploaded
@@ -93,22 +95,23 @@ if img_file is not None:
     img = Image.open(img_file)
     st.image(img, caption="Imagen ingresada", use_container_width=True)
     x, preview = preprocess(img, model)
-    with st.spinner("Prediciendo..."):
+    with st.spinner("Analizando la imagen…"):
         probs = model.predict(x, verbose=0)[0]
     idx = int(np.argmax(probs))
     label_en = class_names[idx]
     label_es = CLASS_NAMES_ES.get(label_en, label_en)
-    st.metric("Clase predicha", f"{label_en} — {label_es}", f"{probs[idx]*100:.2f}% confianza")
+    st.metric("Clase predicha", label_es, f"{probs[idx]*100:.2f} % de confianza")
+    st.caption(f"Etiqueta técnica original del conjunto de datos: {label_en}")
     st.progress(float(probs[idx]), text="Nivel de confianza")
-    st.subheader("Probabilidades por clase")
+    st.subheader("Probabilidad por clase")
     import pandas as pd
     df = pd.DataFrame({
-        "Clase": class_names,
-        "Descripcion": [CLASS_NAMES_ES.get(c, c) for c in class_names],
+        "Clase": [CLASS_NAMES_ES.get(c, c) for c in class_names],
+        "Etiqueta original": class_names,
         "Probabilidad": probs,
     }).sort_values("Probabilidad", ascending=False)
-    st.bar_chart(df.set_index("Clase")["Probabilidad"])
+    st.bar_chart(df.set_index("Clase")["Probabilidad"], y_label="Probabilidad")
     st.dataframe(df.style.format({"Probabilidad": "{:.4f}"}), use_container_width=True)
 else:
-    st.info("Sube una imagen para obtener la prediccion + probabilidad por clase.")
-    st.caption("Tip: usa fotos frontales, buena luz, un solo rostro (como UTKFace Aligned & Cropped).")
+    st.info("Sube una imagen para obtener la predicción y la probabilidad por clase.")
+    st.caption("Consejo: usa fotos frontales, con buena luz y un solo rostro (como en UTKFace).")
