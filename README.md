@@ -94,7 +94,7 @@ Sube un `jpg/png` → verás **clase predicha + % confianza + barras por clase**
 
 1. Sube `notebooks/experimentacion.ipynb` a Colab.
 2. `Entorno > Acelerador GPU T4`.
-3. Ejecuta de arriba a abajo: instala deps, descarga UTKFace, EDA, train/val/test (70/15/15 estratificado), Data Augmentation, CNN, 25 épocas, métricas, matriz de confusión, 10+ predicciones, guardado `.h5`.
+3. Ejecuta de arriba a abajo: instala dependencias, obtiene UTKFace (espejo de Hugging Face; si no hay internet usa la muestra incluida en `data/muestra/`), EDA, división entrenamiento/validación/prueba (70/15/15 estratificada), aumento de datos, CNN, 25 épocas, métricas, matriz de confusión, 10+ predicciones, guardado `.h5`.
 4. Descarga el modelo desde `model/ethnicity_cnn.h5` si quieres usarlo en Streamlit local.
 
 ## 5. Modelo y preprocesamiento
@@ -115,14 +115,22 @@ Tras entrenar se generan en `results/`:
 - `sample_predictions.png` (12 ejemplos de prueba con clase real frente a predicha + confianza)
 - `training_log.csv`, `metrics.txt`
 
+> **Resultados incluidos en el repo:** corresponden al modelo actual (CNN simple
+> 128px, 5 épocas en CPU, 700 imágenes reales: entrenamiento=490,
+> validación=105, prueba=105). Exactitud en prueba ~0.21: esperable con tan
+> pocos datos y pocas épocas; sirven para verificar el flujo completo en
+> español. Para pesos de producción, re-entrena en Colab con 2000+ imágenes y
+> `--model transfer` (referencia esperada ~0.78–0.86).
+
 ## 7. Predicción por código
 
 ```python
 from PIL import Image
+from src.config import CLASS_NAMES_ES
 from src.predict import load_model_and_labels, predict_image
 model, clases = load_model_and_labels("model/ethnicity_cnn.h5", "model/class_names.json")
 etiqueta, prob, vector = predict_image(model, clases, Image.open("foto.jpg"))
-print(etiqueta, prob)
+print(CLASS_NAMES_ES.get(etiqueta, etiqueta), prob)
 ```
 
 ## 8. Referencias
@@ -133,5 +141,9 @@ print(etiqueta, prob)
 
 ## 9. Licencia y ética
 
-- Código: MIT (uso educativo). **Las imágenes UTKFace no se redistribuyen** (licencia original: solo investigación no comercial; © de sus dueños).
+- Código: MIT (uso educativo). El repo incluye solo una **muestra pequeña**
+  (125 imágenes en `data/muestra/`) con fines educativos; el parquet completo y
+  el conjunto de trabajo (`data/raw/`, 700 imágenes) **no** se redistribuyen y se
+  regeneran localmente (licencia original UTKFace: solo investigación no
+  comercial; © de los dueños de las fotos).
 - No usar para fines discriminatorios. Ver sección de uso responsable en la app.
